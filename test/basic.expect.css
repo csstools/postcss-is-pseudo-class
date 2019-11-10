@@ -9,3 +9,7 @@ article > h1:hover, article > h1:focus,article > h2:hover, article > h2:focus,ar
 html > head ~ :is(body + style) {
 	order: 3;
 }
+
+body:is(head) {
+	order: 4;
+}

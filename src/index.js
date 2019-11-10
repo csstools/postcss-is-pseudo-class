@@ -19,6 +19,7 @@ function onEachRoot(sheet) {
 		const oldSelector = rule.selector;
 		const newSelector = getTransformedSelectorList.call(this, oldSelector);
 
+		// update rules that have been transformed
 		if (oldSelector !== newSelector) {
 			rule.selector = newSelector;
 		}
@@ -38,13 +39,16 @@ function getTransformedSelectorList(selectors) {
 * @param {Object} selector
 */
 function onEachSelector(selector) {
-	// conditionally transform a selector
+	// whether the selector has an immediately nested tag
+	const hasNoTagInSelector = selector.nodes.every(part => part.type !== 'tag');
+
+	// conditionally transform each part of a selector
 	selector.each((part, index) => {
-		if (isAcceptableContainer(part)) {
+		if (isFilledContainer(part)) {
 			// transform inner-selectors first
 			onEachSelector.call(this, part);
 
-			if (isAcceptableIsPseudoClass(part)) {
+			if (isAcceptableIsPseudoClass(part, hasNoTagInSelector)) {
 				// replace the `:is` pseudo-class in the clone with its inner selectors
 				part.each(innerPart => {
 					// clone the outer selector and the inner selector
@@ -83,36 +87,40 @@ function onEachSelector(selector) {
 /** Return whether a node is an acceptable container (having nested nodes)
 * @param {Object} node
 */
-function isAcceptableContainer(node) {
+function isFilledContainer(node) {
 	return Array.isArray(node.nodes) && node.nodes.length;
 }
 
-/** Returns whether a node is an `:is` pseudo-class with no immediately nested complex selector.
+/** Returns whether a node is an `:is` pseudo-class with no immediately nested complex selector or, conditionally, tag selector.
 * @param {Object} node
 */
-function isAcceptableIsPseudoClass(node) {
-	return isIsPseudoClass(node) && node.nodes.every(hasNoImmediatelyNestedComplexSelector);
-}
-
-/** Returns whether a node is an `:is` pseudo-class.
-* @param {Object} node
-*/
-function isIsPseudoClass(node) {
-	return node.type === 'pseudo' && node.value === ':is';
-}
-
-/** Returns whether a node has no immediately nested complex selector.
-* @param {Object} node
-*/
-function hasNoImmediatelyNestedComplexSelector(node) {
-	return !isAcceptableContainer(node) || node.nodes.every(isntCombinator)
-}
-
-/** Returns whether a node is not a combinator.
-* @param {Object} node
-*/
-function isntCombinator(node) {
-	return node.type !== 'combinator';
+function isAcceptableIsPseudoClass(node, hasNoTagInSelector) {
+	return (
+		// whether the node is a pseudo selector; and,
+		node.type === 'pseudo' &&
+		// whether the pseudo selector is `:is`; and,
+		node.value === ':is' &&
+		// for every child of the node;
+		node.nodes.every(
+			childNode => (
+				// whether the node is not a filled container; or,
+				!isFilledContainer(childNode) ||
+				// for every child of the node;
+				childNode.nodes.every(
+					grandChildNode => (
+						// whether the node is not a nested complex selector; and,
+						grandChildNode.type !== 'combinator' &&
+						(
+							// whether the selector has no tag selector; or,
+							hasNoTagInSelector ||
+							// whether the node is not also a tag selector
+							grandChildNode.type !== 'tag'
+						)
+					)
+				)
+			)
+		)
+	);
 }
 
 /** Return the most deeply nested first node.

@@ -9,3 +9,7 @@ button:is(:hover, :focus) {
 html > head ~ :is(body + style) {
 	order: 3;
 }
+
+body:is(head) {
+	order: 4;
+}
