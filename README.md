@@ -1,3 +1,5 @@
+<div align="center">⚠️ This package has been discontinued but a new version was made and is being maintained here at <a href="https://github.com/csstools/postcss-plugins/tree/main/plugins/postcss-is-pseudo-class">@csstools/postcss-plugins</a>. ⚠️ </div>
+
 # PostCSS Is Pseudo Class [<img src="https://api.postcss.org/logo.svg" alt="PostCSS" width="90" height="90" align="right">](postcss)
 
 [<img alt="npm version" src="https://img.shields.io/npm/v/postcss-is-pseudo-class.svg" height="20">](https://www.npmjs.com/package/postcss-is-pseudo-class)
